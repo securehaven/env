@@ -101,3 +101,54 @@ func TestGetStrict(t *testing.T) {
 		})
 	}
 }
+
+func TestMustGet(t *testing.T) {
+	cases := []struct {
+		name          string
+		env           string
+		value         string
+		expectedEnv   string
+		expectedValue string
+		expectedPanic bool
+	}{
+		{
+			name:          "nominal",
+			env:           "TEST",
+			value:         "value",
+			expectedEnv:   "TEST",
+			expectedValue: "value",
+			expectedPanic: false,
+		},
+		{
+			name:          "missing",
+			env:           "TEST",
+			value:         "value",
+			expectedEnv:   "NOT_TEST",
+			expectedPanic: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Setenv(c.env, c.value)
+
+			defer func() {
+				r := recover()
+
+				if !c.expectedPanic && r != nil {
+					t.Errorf("unexpected panic: %v", r)
+				}
+			}()
+
+			result := env.MustGet[string](c.expectedEnv)
+
+			if result != c.expectedValue {
+				t.Errorf(
+					"wrong result: expected=%v, received=%v",
+					c.expectedValue,
+					result,
+				)
+			}
+		})
+	}
+}
